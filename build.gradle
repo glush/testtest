@@ -1,0 +1,84 @@
+buildscript {
+    ext.kotlin_version = '1.4.21'
+
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url 'https://maven.google.com' }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.1.0"
+    }
+}
+
+plugins {
+    id 'java'
+    id "org.jetbrains.kotlin.jvm" version "1.4.21"
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+tasks.build.dependsOn tasks.shadowJar
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+// copy FatJar to ./deploy/jar-deployment == prepare for GC Functions deploy
+// also use copyJar task for build project w/o deployment
+
+task copyJar(type: Copy) {
+    from "build/libs/${rootProject.name}-all.jar"
+    into "deploy/jar-deployment"
+}
+
+// run deploy script ./deploy/deploy.cmd after FatJar ready
+// Windows 10 script version
+
+task deployJar(type: Exec) {
+    workingDir 'deploy'
+    commandLine 'cmd', '/c', 'deploy/deploy.cmd'
+}
+
+// set task order: build -> copyJar -> deployJar
+
+copyJar.dependsOn(build)
+deployJar.dependsOn(copyJar)
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "javax.servlet:javax.servlet-api:4.0.1"
+
+    implementation 'com.google.cloud.functions:functions-framework-api:1.0.1'
+
+//// Koin for Kotlin
+//    implementation 'org.koin:koin-core:2.2.2'
+//// Koin extended & experimental features
+//    implementation 'org.koin:koin-core-ext:2.2.2'
+
+    implementation 'io.github.kotlin-telegram-bot.kotlin-telegram-bot:telegram:6.0.2'
+
+    implementation "com.google.cloud:google-cloud-firestore:2.2.0"
+    implementation "com.google.cloud:google-cloud-storage:1.113.9"
+
+//
+//    implementation "com.google.firebase:firebase-admin:6.10.0"
+
+//    implementation "com.google.cloud:google-cloud-bigquery:1.99.0"
+
+//    testCompile 'junit:junit:4.12'
+//    testImplementation 'org.mockito:mockito-core:2.+'
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
+repositories {
+    google()
+    jcenter()
+    mavenCentral()
+    maven { url 'https://maven.google.com' }
+    maven { url "https://jitpack.io" }
+}

@@ -1,0 +1,2 @@
+echo "---> Deploy  GC project"
+gcloud config set project android-broadcast-te-bot && gsutil -m cp -r ../files/* gs://android-broadcast-te-bot.appspot.com && gcloud functions deploy telegram-bot-endpoint --entry-point=ABTeleBot --runtime java11 --trigger-http --memory 512MB --allow-unauthenticated --source=jar-deployment --verbosity debug
